@@ -23,6 +23,11 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO \
             clean build
+      - name: Ad-hoc sign
+        run: |
+          cd TikTokReplier
+          APP=$(find build -name "TikTokReplier.app" -type d | head -1)
+          codesign --force --deep --sign - "$APP"
       - name: Create DMG
         run: |
           cd TikTokReplier
@@ -30,6 +35,10 @@ jobs:
           mkdir dmg_staging
           cp -R "$APP" dmg_staging/
           ln -s /Applications dmg_staging/Applications
+          cat > dmg_staging/README.txt << 'EOF'
+First launch: right-click TikTokReplier.app → Open → click Open
+This bypasses the "unidentified developer" warning (only needed once).
+EOF
           hdiutil create -volname TikTokReplier -srcfolder dmg_staging -ov -format UDZO TikTokReplier.dmg
       - uses: actions/upload-artifact@v4
         with:

@@ -134,6 +134,19 @@ struct RunView: View {
                     }.buttonStyle(.plain)
                 }
             }
+
+            Button(action: {
+                NSWorkspace.shared.open(URL(string: "https://studio.tiktok.com")!)
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.up.right.square")
+                    Text("Open TikTok Studio")
+                }
+                .font(.system(size: 12, weight: .medium)).foregroundColor(.white)
+                .frame(maxWidth: .infinity).padding(.vertical, 8)
+                .background(Color(red: 0.2, green: 0.2, blue: 0.25))
+                .cornerRadius(8)
+            }.buttonStyle(.plain)
         }
         .padding(16)
     }

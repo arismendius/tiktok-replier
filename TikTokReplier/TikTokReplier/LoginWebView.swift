@@ -15,7 +15,7 @@ struct LoginWebView: NSViewRepresentable {
         webView.pageZoom = 0.85
         webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
 
-        var req = URLRequest(url: URL(string: "https://www.tiktok.com/login/phone-or-email/email")!)
+        var req = URLRequest(url: URL(string: "https://www.tiktok.com/login")!)
         req.setValue("https://www.tiktok.com", forHTTPHeaderField: "Referer")
         webView.load(req)
         return webView
