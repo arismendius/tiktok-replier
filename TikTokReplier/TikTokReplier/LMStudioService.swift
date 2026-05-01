@@ -3,10 +3,13 @@ import Foundation
 actor LMStudioService {
     static let shared = LMStudioService()
 
-    func testConnection(url: String) async -> Bool {
-        guard let endpoint = URL(string: "\(url)/models") else { return false }
+    func testConnection(config: AppConfig) async -> Bool {
+        guard let endpoint = URL(string: "\(config.lmStudioURL)/models") else { return false }
         var req = URLRequest(url: endpoint, timeoutInterval: 5)
         req.httpMethod = "GET"
+        if !config.apiKey.isEmpty {
+            req.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
+        }
         do {
             let (_, resp) = try await URLSession.shared.data(for: req)
             return (resp as? HTTPURLResponse)?.statusCode == 200
@@ -26,6 +29,9 @@ actor LMStudioService {
         var req = URLRequest(url: endpoint, timeoutInterval: 60)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if !config.apiKey.isEmpty {
+            req.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
+        }
         req.httpBody = try JSONEncoder().encode(body)
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard (resp as? HTTPURLResponse)?.statusCode == 200 else {
@@ -42,8 +48,8 @@ actor LMStudioService {
         case invalidURL, httpError(Int)
         var errorDescription: String? {
             switch self {
-            case .invalidURL: return "Invalid LM Studio URL"
-            case .httpError(let c): return "LM Studio HTTP \(c)"
+            case .invalidURL: return "Invalid endpoint URL"
+            case .httpError(let c): return "HTTP error \(c)"
             }
         }
     }

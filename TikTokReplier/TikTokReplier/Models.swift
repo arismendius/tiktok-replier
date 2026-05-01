@@ -1,8 +1,17 @@
 import Foundation
 
+enum LLMBackend: String, Codable, CaseIterable {
+    case lmStudio = "lmstudio"
+    case ollama   = "ollama"
+    var label: String { self == .lmStudio ? "LM Studio" : "Ollama" }
+    var defaultURL: String { self == .lmStudio ? "http://localhost:1234/v1" : "http://localhost:11434/v1" }
+}
+
 struct AppConfig: Codable {
+    var backend: LLMBackend = .lmStudio
     var lmStudioURL: String = "http://localhost:1234/v1"
     var modelName: String = "qwen3.6-35b-a3b"
+    var apiKey: String = ""
     var batchSize: Int = 10
     var delayBetweenReplies: Double = 8.0
     var promptInstructions: String = "You are a friendly, authentic TikTok creator replying to comments on your videos. Keep replies short (1-2 sentences max), warm, and conversational. Always match the language of the comment exactly. Never use hashtags in replies. Be genuine, never corporate or robotic."

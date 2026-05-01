@@ -19,7 +19,7 @@ class ReplyEngine: ObservableObject {
 
     private func execute(config: AppConfig) async {
         let store = ConfigStore.shared
-        setStatus("Checking LM Studio...")
+        setStatus("Checking \(config.backend.label)...")
         guard await LMStudioService.shared.testConnection(config: config) else {
             setStatus("LM Studio not reachable"); return
         }

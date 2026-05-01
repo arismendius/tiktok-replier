@@ -8,16 +8,34 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                SettingsSection(title: "LM STUDIO") {
+                SettingsSection(title: "BACKEND") {
                     VStack(alignment: .leading, spacing: 8) {
+                        Picker("", selection: $config.backend) {
+                            ForEach(LLMBackend.allCases, id: \.self) { b in
+                                Text(b.label).tag(b)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: config.backend) { newBackend in
+                            config.lmStudioURL = newBackend.defaultURL
+                            lmConnected = nil
+                        }
+
                         Text("Endpoint URL").font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
-                        TextField("http://localhost:1234/v1", text: $config.lmStudioURL)
+                        TextField(config.backend.defaultURL, text: $config.lmStudioURL)
                             .textFieldStyle(.plain).font(.system(size: 12, design: .monospaced))
                             .padding(8).background(Color(red: 0.1, green: 0.1, blue: 0.1)).cornerRadius(6)
+
                         Text("Model name").font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
-                        TextField("qwen3.6-35b-a3b", text: $config.modelName)
+                        TextField("model name", text: $config.modelName)
                             .textFieldStyle(.plain).font(.system(size: 12, design: .monospaced))
                             .padding(8).background(Color(red: 0.1, green: 0.1, blue: 0.1)).cornerRadius(6)
+
+                        Text("API key (optional)").font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
+                        SecureField("Leave blank for local / no auth", text: $config.apiKey)
+                            .textFieldStyle(.plain).font(.system(size: 12, design: .monospaced))
+                            .padding(8).background(Color(red: 0.1, green: 0.1, blue: 0.1)).cornerRadius(6)
+
                         HStack {
                             Button(action: testConnection) {
                                 HStack(spacing: 6) {
@@ -29,7 +47,8 @@ struct SettingsView: View {
                                 .background(Color(red: 0.25, green: 0.25, blue: 0.25)).cornerRadius(6)
                             }.buttonStyle(.plain).disabled(testingConnection)
                             if let ok = lmConnected {
-                                Label(ok ? "Connected" : "Not reachable", systemImage: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                Label(ok ? "Connected" : "Not reachable",
+                                      systemImage: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
                                     .font(.system(size: 11)).foregroundColor(ok ? .green : .red)
                             }
                         }
@@ -49,7 +68,7 @@ struct SettingsView: View {
 
                 SettingsSection(title: "REPLY INSTRUCTIONS") {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("System prompt sent to Qwen3. Define your tone, style, language rules.")
+                        Text("System prompt. Define your tone, style, language rules.")
                             .font(.system(size: 11)).foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         TextEditor(text: $config.promptInstructions)
@@ -68,7 +87,7 @@ struct SettingsView: View {
     private func testConnection() {
         testingConnection = true; lmConnected = nil
         Task {
-            lmConnected = await LMStudioService.shared.testConnection(url: config.lmStudioURL)
+            lmConnected = await LMStudioService.shared.testConnection(config: config)
             testingConnection = false
         }
     }
