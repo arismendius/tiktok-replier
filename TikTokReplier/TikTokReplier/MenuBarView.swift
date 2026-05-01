@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 struct MenuBarView: View {
     @ObservedObject var state: AppStateManager
