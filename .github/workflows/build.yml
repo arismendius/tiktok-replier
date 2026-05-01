@@ -35,10 +35,7 @@ jobs:
           mkdir dmg_staging
           cp -R "$APP" dmg_staging/
           ln -s /Applications dmg_staging/Applications
-          cat > dmg_staging/README.txt << 'EOF'
-First launch: right-click TikTokReplier.app → Open → click Open
-This bypasses the "unidentified developer" warning (only needed once).
-EOF
+          printf 'First launch: right-click TikTokReplier.app > Open > click Open\nThis bypasses the unidentified developer warning (only needed once).\n' > dmg_staging/README.txt
           hdiutil create -volname TikTokReplier -srcfolder dmg_staging -ov -format UDZO TikTokReplier.dmg
       - uses: actions/upload-artifact@v4
         with:
