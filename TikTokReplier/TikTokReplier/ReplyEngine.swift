@@ -20,7 +20,7 @@ class ReplyEngine: ObservableObject {
     private func execute(config: AppConfig) async {
         let store = ConfigStore.shared
         setStatus("Checking LM Studio...")
-        guard await LMStudioService.shared.testConnection(url: config.lmStudioURL) else {
+        guard await LMStudioService.shared.testConnection(config: config) else {
             setStatus("LM Studio not reachable"); return
         }
         setStatus("Checking TikTok session...")
