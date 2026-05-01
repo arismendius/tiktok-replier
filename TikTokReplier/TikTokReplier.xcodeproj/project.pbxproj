@@ -1,0 +1,44 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+		A101={isa=PBXBuildFile;fileRef=A001;};A102={isa=PBXBuildFile;fileRef=A002;};
+		A103={isa=PBXBuildFile;fileRef=A003;};A104={isa=PBXBuildFile;fileRef=A004;};
+		A105={isa=PBXBuildFile;fileRef=A005;};A106={isa=PBXBuildFile;fileRef=A006;};
+		A107={isa=PBXBuildFile;fileRef=A007;};A108={isa=PBXBuildFile;fileRef=A008;};
+		A109={isa=PBXBuildFile;fileRef=A009;};A110={isa=PBXBuildFile;fileRef=A010;};
+		A111={isa=PBXBuildFile;fileRef=A011;};A112={isa=PBXBuildFile;fileRef=A012;};
+		A113={isa=PBXBuildFile;fileRef=A013;};
+		A001={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=TikTokReplierApp.swift;sourceTree="<group>";};
+		A002={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=AppDelegate.swift;sourceTree="<group>";};
+		A003={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=AppStateManager.swift;sourceTree="<group>";};
+		A004={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=LMStudioService.swift;sourceTree="<group>";};
+		A005={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=TikTokService.swift;sourceTree="<group>";};
+		A006={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=ReplyEngine.swift;sourceTree="<group>";};
+		A007={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=MenuBarView.swift;sourceTree="<group>";};
+		A008={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=SettingsView.swift;sourceTree="<group>";};
+		A009={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=LogView.swift;sourceTree="<group>";};
+		A010={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=LoginWebView.swift;sourceTree="<group>";};
+		A011={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=Models.swift;sourceTree="<group>";};
+		A012={isa=PBXFileReference;lastKnownFileType=sourcecode.swift;path=ConfigStore.swift;sourceTree="<group>";};
+		A013={isa=PBXFileReference;lastKnownFileType=folder.assetcatalog;path=Assets.xcassets;sourceTree="<group>";};
+		A020={isa=PBXFileReference;explicitFileType=wrapper.application;includeInIndex=0;path=TikTokReplier.app;sourceTree=BUILT_PRODUCTS_DIR;};
+		B001={isa=PBXFrameworksBuildPhase;buildActionMask=2147483647;files=();runOnlyForDeploymentPostprocessing=0;};
+		B002={isa=PBXSourcesBuildPhase;buildActionMask=2147483647;files=(A101,A102,A103,A104,A105,A106,A107,A108,A109,A110,A111,A112,);runOnlyForDeploymentPostprocessing=0;};
+		B003={isa=PBXResourcesBuildPhase;buildActionMask=2147483647;files=(A113,);runOnlyForDeploymentPostprocessing=0;};
+		C001={isa=PBXGroup;children=(C002,C003,);sourceTree="<group>";};
+		C002={isa=PBXGroup;children=(A001,A002,A003,A004,A005,A006,A007,A008,A009,A010,A011,A012,A013,);path=TikTokReplier;sourceTree="<group>";};
+		C003={isa=PBXGroup;children=(A020,);name=Products;sourceTree="<group>";};
+		D001={isa=PBXNativeTarget;buildConfigurationList=E002;buildPhases=(B002,B001,B003,);buildRules=();dependencies=();name=TikTokReplier;productName=TikTokReplier;productReference=A020;productType="com.apple.product-type.application";};
+		D000={isa=PBXProject;attributes={LastSwiftUpdateCheck=1500;LastUpgradeCheck=1500;TargetAttributes={D001={CreatedOnToolsVersion=15.0;};};};buildConfigurationList=E001;compatibilityVersion="Xcode 14.0";developmentRegion=en;hasScannedForEncodings=0;knownRegions=(en,Base,);mainGroup=C001;productRefGroup=C003;projectDirPath="";projectRoot="";targets=(D001,);};
+		E003={isa=XCBuildConfiguration;buildSettings={SWIFT_VERSION=5.9;MACOSX_DEPLOYMENT_TARGET=13.0;};name=Debug;};
+		E004={isa=XCBuildConfiguration;buildSettings={SWIFT_VERSION=5.9;MACOSX_DEPLOYMENT_TARGET=13.0;};name=Release;};
+		E005={isa=XCBuildConfiguration;buildSettings={ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon;CODE_SIGN_ENTITLEMENTS=TikTokReplier/TikTokReplier.entitlements;CODE_SIGN_STYLE=Automatic;DEVELOPMENT_TEAM="";ENABLE_HARDENED_RUNTIME=YES;INFOPLIST_FILE=TikTokReplier/Info.plist;PRODUCT_BUNDLE_IDENTIFIER=com.tiktok.replier;PRODUCT_NAME=TikTokReplier;SWIFT_VERSION=5.9;MACOSX_DEPLOYMENT_TARGET=13.0;};name=Debug;};
+		E006={isa=XCBuildConfiguration;buildSettings={ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon;CODE_SIGN_ENTITLEMENTS=TikTokReplier/TikTokReplier.entitlements;CODE_SIGN_STYLE=Automatic;DEVELOPMENT_TEAM="";ENABLE_HARDENED_RUNTIME=YES;INFOPLIST_FILE=TikTokReplier/Info.plist;PRODUCT_BUNDLE_IDENTIFIER=com.tiktok.replier;PRODUCT_NAME=TikTokReplier;SWIFT_VERSION=5.9;MACOSX_DEPLOYMENT_TARGET=13.0;};name=Release;};
+		E001={isa=XCConfigurationList;buildConfigurations=(E003,E004,);defaultConfigurationIsVisible=0;defaultConfigurationName=Release;};
+		E002={isa=XCConfigurationList;buildConfigurations=(E005,E006,);defaultConfigurationIsVisible=0;defaultConfigurationName=Release;};
+	};
+	rootObject = D000;
+}
