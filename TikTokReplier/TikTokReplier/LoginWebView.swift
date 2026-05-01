@@ -7,13 +7,13 @@ struct LoginWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = WKWebsiteDataStore.default()
-        // Spoof a real Safari/macOS User-Agent so TikTok renders the full login UI
-        config.applicationNameForUserAgent = "Version/17.4.1 Safari/605.1.15"
+        // Use mobile Safari UA — TikTok serves a simpler page that renders in WKWebView
+        config.applicationNameForUserAgent = "Mobile/15E148 Safari/604.1"
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
-        webView.pageZoom = 0.85
-        webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15"
+        webView.pageZoom = 1.0
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1"
 
         var req = URLRequest(url: URL(string: "https://www.tiktok.com/login")!)
         req.setValue("https://www.tiktok.com", forHTTPHeaderField: "Referer")
