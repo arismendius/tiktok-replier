@@ -136,7 +136,7 @@ struct RunView: View {
             }
 
             Button(action: {
-                NSWorkspace.shared.open(URL(string: "https://www.tiktok.com/studio")!)
+                NSWorkspace.shared.open(URL(string: "https://www.tiktok.com/tiktokstudio")!)
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.up.right.square")
