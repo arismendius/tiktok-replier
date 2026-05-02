@@ -35,7 +35,8 @@ jobs:
           mkdir dmg_staging
           cp -R "$APP" dmg_staging/
           ln -s /Applications dmg_staging/Applications
-          printf 'First launch: right-click TikTokReplier.app > Open > click Open\nThis bypasses the unidentified developer warning (only needed once).\n' > dmg_staging/README.txt
+          printf '#!/bin/bash\nset -e\nDIR="$(cd "$(dirname "$0")" && pwd)"\necho "Removing quarantine..."\nxattr -dr com.apple.quarantine "$DIR/TikTokReplier.app" 2>/dev/null || true\necho "Copying to /Applications..."\ncp -R "$DIR/TikTokReplier.app" /Applications/\necho "Done! Launch TikTok Replier from Applications."\n' > dmg_staging/Install.command
+          chmod +x dmg_staging/Install.command
           hdiutil create -volname TikTokReplier -srcfolder dmg_staging -ov -format UDZO TikTokReplier.dmg
       - uses: actions/upload-artifact@v4
         with:
