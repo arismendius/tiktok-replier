@@ -1,0 +1,6 @@
+yt-dlp>=2024.1.0
+requests>=2.31.0
+# Optional but recommended: enables the headless-browser fetch that bypasses
+# Creative Center's 403 anti-bot wall. After installing, run:
+#     playwright install chromium
+playwright>=1.40.0
