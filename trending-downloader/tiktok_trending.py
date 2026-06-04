@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-tiktok_trending.py — Search and download the top trending TikTok videos per country.
+tiktok_trending.py — Download the top trending TikTok videos per country.
 
-Uses yt-dlp under the hood. TikTok exposes a per-region "trending" feed at
-https://www.tiktok.com/explore (and a discover endpoint); yt-dlp can enumerate
-and download those entries. No login is required for public trending videos.
+Source: TikTok **Creative Center** (ads.tiktok.com), which publishes an official
+"Top Trending Videos" list with a real per-country selector and requires no
+login. We query its public creative_radar API, take the top N entries for the
+chosen country, then download each video as MP4 with yt-dlp.
 
 Usage:
     python tiktok_trending.py --country US --count 5 --out ./downloads
+    python tiktok_trending.py --country BR --period 30 --list-only
 
 Note: Downloading TikTok videos may violate TikTok's Terms of Service. Use this
 tool only for content you are permitted to download.
@@ -18,80 +20,183 @@ import sys
 from pathlib import Path
 
 try:
+    import requests
+except ImportError:
+    sys.exit("requests is not installed. Run:\n    pip install -r requirements.txt")
+
+try:
     from yt_dlp import YoutubeDL
 except ImportError:
-    sys.exit(
-        "yt-dlp is not installed. Run:\n    pip install -r requirements.txt"
-    )
+    sys.exit("yt-dlp is not installed. Run:\n    pip install -r requirements.txt")
 
-# TikTok's trending/explore feed. The region is driven by the `lang`/cookie and
-# the IP, but we also pass a region hint via the URL where supported.
-TRENDING_URL = "https://www.tiktok.com/explore"
+# Creative Center public endpoint for trending creator videos.
+CC_API = "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/video/list"
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://ads.tiktok.com/business/creativecenter/inspiration/popular/pc/en",
+    # Creative Center reads the locale from this header.
+    "web-id": "0",
+}
 
 
-def build_opts(out_dir: Path, count: int, country: str, cookies: str | None):
+def _params(country: str, count: int, period: int) -> dict:
+    return {
+        "period": period,          # 7, 30, or 120 days
+        "page": 1,
+        "limit": max(count, 10),   # over-fetch a little; we trim later
+        "order_by": "vv",          # by views = "top"
+        "country_code": country.upper(),
+    }
+
+
+def _extract_videos(payload: dict) -> list[dict]:
+    return (payload.get("data") or {}).get("videos") or []
+
+
+def fetch_via_requests(country: str, count: int, period: int) -> list[dict]:
+    """Direct API call. Fast, but TikTok often answers 403 without a signed
+    request — in that case the caller falls back to the browser path."""
+    resp = requests.get(CC_API, headers=HEADERS,
+                        params=_params(country, count, period), timeout=30)
+    resp.raise_for_status()
+    return _extract_videos(resp.json())[:count]
+
+
+def fetch_via_browser(country: str, count: int, period: int) -> list[dict]:
+    """Drive Creative Center in a headless browser so TikTok's own JS signs the
+    XHR; we capture the trending JSON straight off the network response."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise RuntimeError(
+            "Browser fetch needs Playwright:\n"
+            "    pip install playwright && playwright install chromium"
+        )
+
+    page_url = ("https://ads.tiktok.com/business/creativecenter/inspiration/"
+                f"popular/pc/en?countryCode={country.upper()}&period={period}")
+    captured: list[dict] = []
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        ctx = browser.new_context(user_agent=HEADERS["User-Agent"])
+        page = ctx.new_page()
+
+        def on_response(resp):
+            if "popular_trend/video/list" in resp.url and resp.ok:
+                try:
+                    captured.extend(_extract_videos(resp.json()))
+                except Exception:
+                    pass
+
+        page.on("response", on_response)
+        page.goto(page_url, wait_until="networkidle", timeout=60_000)
+        # Give late XHRs a moment to land.
+        page.wait_for_timeout(3_000)
+        browser.close()
+
+    if not captured:
+        raise RuntimeError("Browser loaded but no trending data was captured.")
+    return captured[:count]
+
+
+def fetch_trending_list(country: str, count: int, period: int,
+                        use_browser: bool) -> list[dict]:
+    """Return up to `count` trending video records for `country`."""
+    videos: list[dict] = []
+    if not use_browser:
+        try:
+            videos = fetch_via_requests(country, count, period)
+        except Exception as e:  # noqa: BLE001
+            print(f"  direct API failed ({e}); falling back to browser...")
+    if not videos:
+        videos = fetch_via_browser(country, count, period)
+
+    if not videos:
+        raise RuntimeError(
+            f"No trending videos returned for '{country}'. "
+            "The country code may be unsupported or the API response changed."
+        )
+    return videos[:count]
+
+
+def to_url(video: dict) -> str | None:
+    """Build a canonical tiktok.com video URL from a Creative Center record."""
+    # Creative Center records carry the numeric video id under a few keys.
+    vid = video.get("id") or video.get("item_id") or video.get("tiktok_id")
+    author = video.get("username") or video.get("author") or "_"
+    if not vid:
+        return None
+    return f"https://www.tiktok.com/@{author}/video/{vid}"
+
+
+def download(urls: list[str], out_dir: Path, cookies: str | None):
+    out_dir.mkdir(parents=True, exist_ok=True)
     opts = {
         "outtmpl": str(out_dir / "%(uploader)s-%(id)s.%(ext)s"),
-        "playlistend": count,
         "format": "mp4/best",
-        "noplaylist": False,
         "ignoreerrors": True,
         "quiet": False,
-        "no_warnings": False,
-        # A desktop UA helps TikTok serve the web feed.
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0 Safari/537.36"
-            ),
-            "Accept-Language": f"{country.lower()};q=0.9,en;q=0.8",
-        },
+        "http_headers": {"User-Agent": HEADERS["User-Agent"]},
     }
     if cookies:
         opts["cookiefile"] = cookies
-    return opts
-
-
-def fetch_trending(country: str, count: int, out_dir: Path, cookies: str | None):
-    out_dir.mkdir(parents=True, exist_ok=True)
-    opts = build_opts(out_dir, count, country, cookies)
-
-    print(f"Fetching top {count} trending TikToks for region '{country}'...")
     with YoutubeDL(opts) as ydl:
-        # Download the trending feed, limited to `count` entries.
-        ydl.download([TRENDING_URL])
-    print(f"\nDone. Files saved to: {out_dir.resolve()}")
+        ydl.download(urls)
 
 
 def main():
     p = argparse.ArgumentParser(
-        description="Download the top trending TikTok videos for a country."
+        description="Download the top trending TikTok videos for a country "
+                    "(via TikTok Creative Center)."
     )
-    p.add_argument(
-        "--country", "-c", default="US",
-        help="ISO country code (e.g. US, GB, BR, JP). Default: US",
-    )
-    p.add_argument(
-        "--count", "-n", type=int, default=5,
-        help="Number of top videos to download. Default: 5",
-    )
-    p.add_argument(
-        "--out", "-o", default="./downloads",
-        help="Output directory. Default: ./downloads",
-    )
-    p.add_argument(
-        "--cookies", default=None,
-        help="Path to a cookies.txt file (export from your logged-in browser) "
-             "to access region-specific or restricted feeds.",
-    )
+    p.add_argument("--country", "-c", default="US",
+                   help="ISO country code (US, GB, BR, JP, …). Default: US")
+    p.add_argument("--count", "-n", type=int, default=5,
+                   help="Number of top videos. Default: 5")
+    p.add_argument("--period", type=int, choices=[7, 30, 120], default=7,
+                   help="Trending window in days: 7, 30, or 120. Default: 7")
+    p.add_argument("--out", "-o", default="./downloads",
+                   help="Output directory. Default: ./downloads")
+    p.add_argument("--cookies", default=None,
+                   help="Path to cookies.txt for region-locked downloads.")
+    p.add_argument("--list-only", action="store_true",
+                   help="Only print the trending URLs; do not download.")
+    p.add_argument("--browser", action="store_true",
+                   help="Force the headless-browser fetch (needed when the "
+                        "direct API returns 403). Requires Playwright.")
     args = p.parse_args()
 
-    out_dir = Path(args.out) / args.country.upper()
+    country = args.country.upper()
     try:
-        fetch_trending(args.country.upper(), args.count, out_dir, args.cookies)
-    except Exception as e:  # noqa: BLE001 - surface a clean message to the user
-        sys.exit(f"Error: {e}")
+        videos = fetch_trending_list(country, args.count, args.period,
+                                     use_browser=args.browser)
+    except Exception as e:  # noqa: BLE001
+        sys.exit(f"Error fetching trending list: {e}")
+
+    urls = [u for u in (to_url(v) for v in videos) if u]
+    if not urls:
+        sys.exit("Could not derive any video URLs from the trending data.")
+
+    print(f"Top {len(urls)} trending TikToks for {country} (last {args.period}d):")
+    for i, u in enumerate(urls, 1):
+        print(f"  {i}. {u}")
+
+    if args.list_only:
+        return
+
+    out_dir = Path(args.out) / country
+    print(f"\nDownloading to {out_dir.resolve()} ...")
+    try:
+        download(urls, out_dir, args.cookies)
+    except Exception as e:  # noqa: BLE001
+        sys.exit(f"Error during download: {e}")
+    print("\nDone.")
 
 
 if __name__ == "__main__":
